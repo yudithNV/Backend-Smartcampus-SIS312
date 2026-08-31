@@ -17,44 +17,6 @@ API REST para el sistema SmartCampus, construida con Spring Boot.
 - Maven 3.6+
 - Base de datos (configurar en `application.properties`)
 
-## Instalación
-
-```bash
-git clone https://github.com/yudithNV/Backend-SmartCampus.git
-```
-```sh
-cd Backend-SmartCampus
-```
-```sh
-mvnw clean install
-```
-
-### Modo de desarrollo 💻
-
-```sh
-mvnw spring-boot:run
-```
-
-### Modo para producción ☁️
-
-```sh
-./mvnw clean package
-java -jar target/smartcampus-0.0.1-SNAPSHOT.jar
-```
-### El servidor se ejecuta en
-
-
-```plaintext
-http://localhost:8081
-```
-
----
-
-# Ejecutar en modo producción DOCKER
-
-#  Ejecución completa con Docker Compose
-
-
 #  Estructura de carpetas recomendada
 
 Crear una carpeta principal llamada `SmartCampus` y dentro colocar ambos repositorios:
