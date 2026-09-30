@@ -1,19 +1,25 @@
 package com.example.smartcampus.service;
 
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
 import com.example.smartcampus.dto.ChatbotRequestDTO;
 import com.example.smartcampus.dto.ChatbotResponseDTO;
 import com.example.smartcampus.entity.ChatbotHistory;
 import com.example.smartcampus.entity.User;
 import com.example.smartcampus.repository.ChatbotHistoryRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * ChatbotService — integrado con Groq API (GRATUITO, sin tarjeta, sin restricción de región)
@@ -35,7 +41,7 @@ public class ChatbotService {
     private String groqApiKey;
 
     private static final String GROQ_URL   = "https://api.groq.com/openai/v1/chat/completions";
-    private static final String GROQ_MODEL = "llama-3.1-8b-instant";
+    private static final String GROQ_MODEL = "openai/gpt-oss-20b";
 
     private static final String ESCALATION_SENTINEL = "ESCALAR";
     private static final String ESCALATION_MESSAGE =
@@ -62,15 +68,7 @@ String normalized = rawAnswer == null
         ? ""
         : rawAnswer.toLowerCase();
 
-boolean escalated =
-        normalized.contains("escalar")
-        || normalized.contains("no tengo información")
-        || normalized.contains("no tengo acceso")
-        || normalized.contains("no dispongo de información")
-        || normalized.contains("no puedo confirmar")
-        || normalized.contains("no cuento con información")
-        || normalized.contains("consulta soporte")
-        || normalized.contains("contactar con soporte");
+boolean escalated = normalized.contains("escalar");
 
 String cleanedAnswer = rawAnswer == null
         ? ""
@@ -120,7 +118,7 @@ String finalAnswer = escalated
         Map<String, Object> body = Map.of(
                 "model", GROQ_MODEL,
                 "messages", List.of(systemMessage, userMessage),
-                "max_tokens", 400,
+                "max_tokens", 1500,
                 "temperature", 0.3
         );
 
@@ -159,7 +157,7 @@ String finalAnswer = escalated
     private String buildSystemPrompt() {
         return """
                 Eres el asistente virtual de UCB SmartCampus, la plataforma digital de la \
-                Universidad Católica Boliviana "San Pablo".
+                Universidad Católica Boliviana "San Pablo" (UCB), sede La Paz.
 
                 SmartCampus es una plataforma web donde los estudiantes de la UCB pueden:
                 - Ver eventos académicos, culturales y sociales del campus
@@ -202,13 +200,55 @@ String finalAnswer = escalated
                 - Muestra los eventos en los que el estudiante se registró
                 - También muestra eventos generales de la UCB
 
+                INSCRIPCIÓN A MATERIAS (información general UCB):
+                - Derecho de inscripción: realizar el depósito de Bs. 2.300 por el sistema de pagos.
+                - Requisito de idioma inglés: verificar cumplimiento. Si estás en tercer semestre o \
+                más adelante, leer el comunicado oficial sobre este aspecto.
+                - Inscripción de asignaturas: ingresar al Sistema Académico Nacional SIAAN para \
+                revisar la oferta académica y realizar la inscripción.
+                - Readmisión: si dejaste de cursar uno o más semestres, escribe un correo a \
+                asanjines@ucb.edu.bo solicitando tu readmisión.
+                - Materias INTERSEDE: se ofrecen desde diferentes sedes de forma virtual o \
+                semipresencial. Para inscribirte, elige en "Departamento" la opción "INTERSEDES".
+                - Materias de IDIOMAS: para inscribirte elige en "Departamento" la opción "IDIOMAS".
+                - Materias LIBRES: revisar la Guía de inscripción de asignaturas libres.
+                - El sistema no permite inscribir materias con cruces de horarios.
+                - El servicio SIAAN está disponible 24 horas durante el periodo de inscripciones, \
+                según las fechas del Calendario Académico.
+                - Se recomienda revisar la oferta académica y elegir materias y paralelos antes de \
+                inscribirse.
+                - Si tienes dudas sobre una asignatura específica, contacta a tu Director de carrera.
+
+                HORARIOS DE ATENCIÓN UCB (sede La Paz):
+                - Horario general administrativo: lunes a viernes de 08:30 a 16:00.
+                - Campus Obrajes: lunes a viernes de 08:30 a 16:00.
+                - Sede El Alto (Bloque Monseñor Eugenio Scarpellini): lunes a viernes de 08:30 a 16:30.
+                - Cajas y Tesorería: lunes a viernes de 09:00 a 16:00.
+                - Servicio Médico Estudiantil (Campus Obrajes, Bloque T): lunes a viernes de \
+                08:00 a 20:00.
+                - Oficina de Informaciones: lunes a viernes de 7:00 a 19:00 y sábados de 08:30 a 12:30.
+                - Dirección Académica: lunes a viernes de 8:30 a 16:00.
+                - Soporte de plataformas (LMS, SIAAN, G-Suite): lunes a viernes de 8:30 a 16:00.
+
+                CONTACTOS ÚTILES:
+                - Oficina de Informaciones: ucb.lpz@ucb.edu.bo - Tel. 2782222
+                - Readmisión: asanjines@ucb.edu.bo
+                - Soporte LMS / SIAAN / G-Suite: gveizaga@ucb.edu.bo - WhatsApp 70710025
+                - Soporte NEO-Learning: gsalgueiro@ucb.edu.bo - WhatsApp 75665315
+                - Soporte G-Suite: oalmaraz@ucb.edu.bo - WhatsApp 72263665
+                - Dirección sede La Paz: Av. 14 de Septiembre N°4807, Obrajes.
+                - WhatsApp general UCB La Paz: 75851671
+
                 REGLAS:
                 1. Responde SIEMPRE en español, de forma amable y concisa (máximo 2 párrafos).
-                2. Responde preguntas sobre SmartCampus: eventos, noticias, sugerencias, \
-                   reclamos, perfil y calendario.
-                3. Si la pregunta no tiene relación con SmartCampus, la UCB o no tienes suficiente \
+                2. Responde preguntas sobre: la plataforma SmartCampus (eventos, noticias, \
+                sugerencias, reclamos, perfil y calendario), inscripción a materias, horarios \
+                de atención de la UCB, trámites académicos y contactos institucionales.
+                3. Si la pregunta no tiene relación con SmartCampus, la UCB, o no tienes suficiente \
                 información para responder con seguridad, responde ÚNICAMENTE con: ESCALAR
                 4. No inventes información que no esté en este contexto.
+                5. No des información sobre personas específicas más allá de los contactos \
+                institucionales listados arriba.
                 """;
     }
 }
