@@ -16,10 +16,14 @@ public class CorsConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         // Permitir tu frontend
-        configuration.setAllowedOrigins(Arrays.asList(
+        // Permitir tu frontend (local y compartido por ngrok / cloudflared)
+        configuration.setAllowedOriginPatterns(Arrays.asList(
             "http://localhost:5173",
             "http://localhost:3000",
-            "http://localhost:5174"
+            "http://localhost:5174",
+            "https://*.ngrok-free.dev",
+            "https://*.ngrok-free.app",
+            "https://*.trycloudflare.com"
         ));
 
         // Métodos permitidos
